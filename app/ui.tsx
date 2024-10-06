@@ -4,31 +4,34 @@ import Header from "@/components/header";
 import NewNote from "@/components/new-note";
 import NoteViewer from "@/components/note-viewer";
 import Sidebar from "@/components/sidebar";
+import { Database } from "@/types_db";
 import { supabase } from "@/utils/supabase";
 import { useEffect, useState } from "react";
 
 
 
-const noteList = [
-  {
-    id:1,
-    title: "노트1",
-    content: "노트 내용 입니다."
-  },
-  {
-    id:2,
-    title: "노트2",
-    content: "노트 내용 입니다."
-  }
-]
 export default function UI() {
 
   // 보고있는 노트 아이디
   const [activeNoteId, setActiveNoteId] =useState(null);
   const [isCreating, setIsCreating] =useState(false);
+  // 타입지정 추가
+  const [noteList, setNoteList] =useState<
+    Database["public"]["Tables"]["note"]["Row"][]
+  >([]);
+
+  // note 테이블의 모든 DB 조회 함수 추가
+  const fetchNoteList = async () => {
+    const{data, error} = await supabase.from("note").select("*");
+    if (error) {
+      alert(error.message);
+      return
+    }
+    setNoteList(data);
+  }
 
   useEffect(()=> {
-    supabase.from('note').select("*").then(console.log);
+    fetchNoteList();
   }, [])
 
   return (
@@ -42,9 +45,13 @@ export default function UI() {
           noteList={noteList}
         />
         {isCreating ? (
-            <NewNote setIsCreating ={setIsCreating}/>
+            <NewNote fetchNoteList = {fetchNoteList} setIsCreating ={setIsCreating} setActiveNoteId={setActiveNoteId}/>
           ) : activeNoteId ? (
-            <NoteViewer note={noteList.find((note) => note.id === activeNoteId)} />
+            <NoteViewer 
+            note={noteList.find((note) => note.id === activeNoteId)} 
+            setActiveNoteId={setActiveNoteId}
+            fetchNoteList={fetchNoteList}
+            />
             ) : <EmptyNote/>
         }
       </div>

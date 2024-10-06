@@ -1,14 +1,35 @@
 //note-viewer.tsx
 'use client'
 
+import { supabase } from "@/utils/supabase";
 import { useEffect, useState } from "react";
 
 export default function NoteViewer({
-  note, // {id: 1, title: "", content:""}
+  note, setActiveNoteId, fetchNoteList// {id: 1, title: "", content:""}
 }) {
   const [title, setTitle] = useState(note?.title);
   const [content, setContent] = useState(note?.content);
   const [isEditing, setIsEditing] = useState(false);
+
+  const onEdit = async ()=>{
+    const {data, error} = await supabase.from("note").update({title, content})
+    .eq('id', note.id)
+    if (error) {
+      alert(error.message)
+    }
+    setIsEditing(false);
+    fetchNoteList();
+  };
+  const onDelete = async ()=> {
+    const {data, error} = await supabase.from("note").delete()
+    .eq('id', note.id)
+    if (error) {
+      alert(error.message)
+    }
+    setIsEditing(false);
+    setActiveNoteId(null);
+    fetchNoteList();
+  }
 
   useEffect(()=> {
     setTitle(note?.title);
@@ -47,7 +68,7 @@ export default function NoteViewer({
         {isEditing ? (
           <>
             <button 
-            onClick={()=> setIsEditing(false)}
+            onClick={()=> onEdit()}
             className="text-lg font-bold bg-white border-2 border-green-500 rounded-full px-3 py-1 mt-4 hover:text-white hover:bg-green-500 transition-all duration-300 ease-in-out">저장</button>
             <button className="text-lg font-bold bg-white border-2 border-red-500 rounded-full px-3 py-1 mt-4 hover:text-white hover:bg-red-500 transition-all duration-300 ease-in-out">삭제</button>
           </>
@@ -57,7 +78,9 @@ export default function NoteViewer({
             <button 
             onClick={()=> setIsEditing(true)}
             className="text-lg font-bold bg-white border-2 border-green-500 rounded-full px-3 py-1 mt-4 hover:text-white hover:bg-green-500 transition-all duration-300 ease-in-out">수정</button>
-            <button className="text-lg font-bold bg-white border-2 border-red-500 rounded-full px-3 py-1 mt-4 hover:text-white hover:bg-red-500 transition-all duration-300 ease-in-out">삭제</button>
+            <button 
+            onClick={()=> onDelete()}
+            className="text-lg font-bold bg-white border-2 border-red-500 rounded-full px-3 py-1 mt-4 hover:text-white hover:bg-red-500 transition-all duration-300 ease-in-out">삭제</button>
           </>
         )}
 
