@@ -19,10 +19,15 @@ export default function UI() {
   const [noteList, setNoteList] =useState<
     Database["public"]["Tables"]["note"]["Row"][]
   >([]);
-
+  // 검색 상태
+  const [search, setSearch] = useState("");
   // note 테이블의 모든 DB 조회 함수 추가
   const fetchNoteList = async () => {
-    const{data, error} = await supabase.from("note").select("*");
+    const{data, error} = await supabase
+    .from("note")
+    .select("*")
+    // 검색 쿼리 추가
+    .ilike("title", `%${search}%`);
     if (error) {
       alert(error.message);
       return
@@ -33,7 +38,10 @@ export default function UI() {
   useEffect(()=> {
     fetchNoteList();
   }, [])
-
+  // 검색창 입력 될때마다 리스트 조회 수행
+  useEffect(()=> {
+    fetchNoteList();
+  }, [search])
   return (
     <main className="w-full h-screen flex flex-col">
       <Header />
@@ -43,6 +51,8 @@ export default function UI() {
           setActiveNoteId = {setActiveNoteId } 
           setIsCreating={setIsCreating} 
           noteList={noteList}
+          search = {search}
+          setSearch = {setSearch}
         />
         {isCreating ? (
             <NewNote fetchNoteList = {fetchNoteList} setIsCreating ={setIsCreating} setActiveNoteId={setActiveNoteId}/>
